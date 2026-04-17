@@ -1,8 +1,10 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import authRouter from './routes/auth.routes.js';
 import cors from 'cors';
 import morgan from 'morgan';
+// routes 
+import authRouter from './routes/auth.routes.js';
+import chatRouter from './routes/chat.routes.js';
 
 
 
@@ -15,7 +17,11 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
+
+// routes
 app.use('/auth', authRouter);
+app.use('/chats', chatRouter);
+
 
 app.get('/',(req,res)=>{
     res.json({message:"Welcome to the Preplexity Clone API!"});
