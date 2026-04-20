@@ -1,6 +1,6 @@
 import { initializeSocket } from "../services/chat.socket";
 import{ sendmessage, getChats, getmessages, deleteChat } from "../services/chat.api";
-import { setChats, SetCurrentChatId, setLoading, setError,createNewChat,addNewMessage,addMessages } from "../chat.slice";
+import { setChats, SetCurrentChatId, setLoading, setError,createNewChat,addNewMessage,addMessages, removeMessage, removeChat, replaceChat } from "../chat.slice";
 import { useDispatch } from "react-redux";
 
 export const useChat = ()=>{
@@ -8,25 +8,44 @@ export const useChat = ()=>{
     const dispatch = useDispatch();
 
     const handleSendMessage = async (message, chatId)=>{
+        const optimisticChatId = chatId || `temp-chat-${Date.now()}`;
+        const optimisticMessageId = `temp-message-${Date.now()}`;
+
+        if (!chatId) {
+            dispatch(createNewChat({
+                title: message,
+                chatId: optimisticChatId,
+                createdAt: new Date().toISOString()
+            }));
+        }
+
+        dispatch(SetCurrentChatId(optimisticChatId));
+        dispatch(addNewMessage({
+            chatId: optimisticChatId,
+            content: message,
+            role: "user",
+            messageId: optimisticMessageId
+        }));
         dispatch(setLoading(true));
         try{
             const data = await sendmessage(message, chatId);
-            const { chat, aiMessage, userMessage } = data;
-            const resolvedChatId = chat?._id || chatId || userMessage?.chat;
+            const { chat, aiMessage } = data;
+            const resolvedChatId = chat?._id || chatId;
 
-            if (chat?._id) {
-                dispatch(createNewChat({
-                    title: chat.title,
-                    chatId: chat._id
-                }))
+            if (resolvedChatId && resolvedChatId !== optimisticChatId) {
+                dispatch(replaceChat({
+                    oldChatId: optimisticChatId,
+                    newChatId: resolvedChatId,
+                    title: chat?.title
+                }));
             }
 
-            if (resolvedChatId && userMessage?.content) {
-                dispatch(addNewMessage({
+            if (resolvedChatId && chat?.title) {
+                dispatch(createNewChat({
+                    title: chat.title,
                     chatId: resolvedChatId,
-                    content: userMessage.content,
-                    role: userMessage.role
-                }))
+                    createdAt: chat.createdAt
+                }));
             }
 
             if (resolvedChatId && aiMessage?.content) {
@@ -41,6 +60,14 @@ export const useChat = ()=>{
                 dispatch(SetCurrentChatId(resolvedChatId));
             }
         }catch(error){
+            if (chatId) {
+                dispatch(removeMessage({
+                    chatId: optimisticChatId,
+                    messageId: optimisticMessageId
+                }));
+            } else {
+                dispatch(removeChat(optimisticChatId));
+            }
             dispatch(setError("Failed to send message"));
         } finally{
             dispatch(setLoading(false));
@@ -54,8 +81,10 @@ export const useChat = ()=>{
             const { chats } = data;
             dispatch(setChats(chats.reduce((acc, chat)=>{
                 acc[chat._id] = {
+                    id: chat._id,
                     title: chat.title,
                     chatId: chat._id,
+                    createdAt: chat.createdAt,
                     messages: []
                 }
                 return acc;
@@ -89,5 +118,3 @@ export const useChat = ()=>{
         initializeSocket
     }
 }
-
-

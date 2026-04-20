@@ -21,6 +21,12 @@ const Dashbord = () => {
   const userName = user?.fullname || user?.name || user?.username || "Explorer"
   const userInitial = userName.charAt(0).toUpperCase()
   const currentMessages = chats[curentChatId]?.messages || []
+  const recentChats = Object.values(chats).sort((firstChat, secondChat) => {
+    const firstCreatedAt = new Date(firstChat.createdAt || 0).getTime()
+    const secondCreatedAt = new Date(secondChat.createdAt || 0).getTime()
+
+    return secondCreatedAt - firstCreatedAt
+  })
   const isChatEmpty = currentMessages.length === 0
 
   const handleSubmitMessage = async (event) => {
@@ -32,8 +38,8 @@ const Dashbord = () => {
       return
     }
 
-    await handleSendMessage(trimmedMessage, curentChatId)
     setChatInput("")
+    await handleSendMessage(trimmedMessage, curentChatId)
   }
 
   const handleSelectChat = (chatId) => {
@@ -82,7 +88,7 @@ const Dashbord = () => {
                 Recent chats
               </p>
               <div className="scrollbar-minimal mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
-                {Object.values(chats).map((chat, index) => (
+                {recentChats.map((chat, index) => (
                   <button
                     key={chat.chatId || index}
                     type="button"
@@ -167,7 +173,7 @@ const Dashbord = () => {
               <div className="space-y-4">
                 {currentMessages.map((message, index) => (
                   <div
-                    key={`${message.role}-${index}-${message.content}`}
+                    key={message.id || `${message.role}-${index}-${message.content}`}
                     className={`flex ${
                       message.role === "user" ? "justify-end" : "justify-start"
                     }`}
