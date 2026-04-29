@@ -4,6 +4,14 @@ import { useChat } from "../hook/useChat"
 import { useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 
+const stripSourcesSection = (content = "") => {
+  if (typeof content !== "string") {
+    return content
+  }
+
+  return content.replace(/\n+(Sources|References|Citations):\s*[\s\S]*$/i, "").trim()
+}
+
 const Dashbord = () => {
   const chats = useSelector(state => state.chat.chats)
   const curentChatId = useSelector(state => state.chat.currentChatId)
@@ -231,7 +239,7 @@ const Dashbord = () => {
                             )
                           }}
                         >
-                          {message.content}
+                          {stripSourcesSection(message.content)}
                         </ReactMarkdown>
                       </div>
                     </div>

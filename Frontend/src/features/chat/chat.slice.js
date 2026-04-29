@@ -99,7 +99,7 @@ const chatSlice = createSlice({
                 };
             }
             state.chats[chatId].messages = messages.map((message, index) => ({
-                id: message.id ?? message._id ?? `${message.role}-${chatId}-${index}`,
+                id: message.id ?? message._id ?? `${message.role}-${chatId}-${index}`,//optional
                 content: message.content,
                 role: message.role
             }))

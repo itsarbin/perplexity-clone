@@ -1,7 +1,7 @@
 import chatModel from "../model/chat.model.js";
 import messageModel from "../model/message.model.js";
-import { generateResponse } from "../services/ai.service.js";
-import { generateChatTitle } from "../services/ai.service.js";
+import { generateResponse,generateChatTitle  } from "../services/ai.service.js";
+
 
 export const sendMessage = async (req, res) => {
 
@@ -53,7 +53,7 @@ export const sendMessage = async (req, res) => {
         res.status(500).json(
             {
                 message: "Error generating response",
-                error
+                error: error.message || error
             }
         )
     }
